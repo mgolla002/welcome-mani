@@ -56,13 +56,13 @@ stages:
           $(Pipeline.Workspace)/python-dist/*
       displayName: Upload wheel to JFrog PyPi-local
 
-    - task: Docker@2
-      displayName: Build and push image to JFrog
-      inputs:
-        containerRegistry: jfrog-docker-sc
-        repository: docker-trail/$(imageName)
-        command: buildAndPush
-        Dockerfile: Dockerfile
-        tags: |
-          $(tag)
-          latest
+        - script: |
+        docker build -t $(JFROG_URL)/docker-trial/$(imageName):$(tag) \
+                     -t $(JFROG_URL)/docker-trial/$(imageName):latest .
+      displayName: Build Docker image
+
+    - script: |
+        echo "$(JFROG_TOKEN)" | docker login $(JFROG_URL) -u $(JFROG_USER) --password-stdin
+        docker push $(JFROG_URL)/docker-trial/$(imageName):$(tag)
+        docker push $(JFROG_URL)/docker-trial/$(imageName):latest
+      displayName: Push image to JFrog
