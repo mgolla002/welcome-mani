@@ -5,18 +5,64 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.12'
+variables:
+  - group: jfrog-vars
+  - name: imageName
+    value: welcome-mani
+  - name: tag
+    value: $(Build.BuildId)
 
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt build
-  displayName: Install dependencies
+stages:
+- stage: Build
+  jobs:
+  - job: BuildTest
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.12'
 
-- script: pytest -q
-  displayName: Run tests
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt build twine
+      displayName: Install dependencies
 
-- script: python -m build
-  displayName: Build wheel
+    - script: pytest -q
+      displayName: Run tests
+
+    - script: python -m build
+      displayName: Build wheel
+
+    - publish: dist
+      artifact: python-dist
+
+- stage: PublishJFrog
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: Publish
+    steps:
+    - download: current
+      artifact: python-dist
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.12'
+
+    - script: |
+        pip install twine
+        twine upload \
+          --repository-url https://$(JFROG_URL)/artifactory/api/pypi/pypi-local \
+          -u $(JFROG_USER) -p $(JFROG_TOKEN) \
+          $(Pipeline.Workspace)/python-dist/*
+      displayName: Upload wheel to JFrog PyPi-local
+
+    - task: Docker@2
+      displayName: Build and push image to JFrog
+      inputs:
+        containerRegistry: jfrog-docker-sc
+        repository: docker-trail/$(imageName)
+        command: buildAndPush
+        Dockerfile: Dockerfile
+        tags: |
+          $(tag)
+          latest
