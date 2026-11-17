@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "welcome-mani"
+version = "1.0.0"
+description = "Welcome mani sample app"
+requires-python = ">=3.10"
+dependencies = ["flask"]
+
+[tool.setuptools]
+packages = ["app"]
