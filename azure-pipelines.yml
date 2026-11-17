@@ -56,7 +56,7 @@ stages:
           $(Pipeline.Workspace)/python-dist/*
       displayName: Upload wheel to JFrog PyPi-local
 
-        - script: |
+    - script: |
         docker build -t $(JFROG_URL)/docker-trial/$(imageName):$(tag) \
                      -t $(JFROG_URL)/docker-trial/$(imageName):latest .
       displayName: Build Docker image
