@@ -1,0 +1,27 @@
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: jfrog-vars
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.12'
+
+- script: |
+    pip install welcome-mani \
+      --index-url https://$(JFROG_USER):$(JFROG_TOKEN)@$(JFROG_URL)/artifactory/api/pypi/pypl-local/simple \
+      --extra-index-url https://pypi.org/simple
+    pip show welcome-mani
+  displayName: Pull wheel from JFrog
+
+- script: |
+    echo "$(JFROG_TOKEN)" | docker login $(JFROG_URL) -u $(JFROG_USER) --password-stdin
+    docker pull $(JFROG_URL)/docker-trial/welcome-mani:latest
+    docker run -d -p 8000:8000 --name wm $(JFROG_URL)/docker-trial/welcome-mani:latest
+    sleep 5
+    curl http://localhost:8000
+  displayName: Pull image from JFrog and run it
