@@ -51,7 +51,7 @@ stages:
     - script: |
         pip install twine
         twine upload \
-          --repository-url https://$(JFROG_URL)/artifactory/api/pypi/pypi-local \
+          --repository-url https://$(JFROG_URL)/artifactory/api/pypi/pypl-local \
           -u $(JFROG_USER) -p $(JFROG_TOKEN) \
           $(Pipeline.Workspace)/python-dist/*
       displayName: Upload wheel to JFrog PyPi-local
